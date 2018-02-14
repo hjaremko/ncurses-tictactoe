@@ -1,29 +1,41 @@
 #include <string>
 #include <curses.h>
 
-void drawGrid()
+int centerPrint( int y, std::string String )
 {
-    mvprintw( 4, 35, "#########\n" );
-    mvprintw( 5, 35, "#| | | |#\n" );
-    mvprintw( 6, 35, "#-------#\n" );
-    mvprintw( 7, 35, "#| | | |#\n" );
-    mvprintw( 8, 35, "#-------#\n" );
-    mvprintw( 9, 35, "#| | | |#\n" );
-    mvprintw( 10,35, "#########\n" );
+    int x = ( COLS - String.size() ) / 2;
+
+    mvprintw( y, x, String.c_str() );
+
+    return x;
 }
 
-bool checkForWin( char Char, int& turn )
+int drawGrid()
 {
-    if( ( ( mvinch( 5, 37 ) == Char ) && ( mvinch( 5, 39 ) == Char) && ( mvinch( 5, 41 ) == Char ) ) || //1poz
-        ( ( mvinch( 6, 37 ) == Char ) && ( mvinch( 6, 39 ) == Char) && ( mvinch( 6, 41 ) == Char ) ) || //2poz
-        ( ( mvinch( 7, 37 ) == Char ) && ( mvinch( 7, 39 ) == Char) && ( mvinch( 7, 41 ) == Char ) ) || //3poz
-        ( ( mvinch( 5, 37 ) == Char ) && ( mvinch( 7, 37 ) == Char) && ( mvinch( 9, 37 ) == Char ) ) || //1pion
-        ( ( mvinch( 5, 39 ) == Char ) && ( mvinch( 7, 39 ) == Char) && ( mvinch( 9, 39 ) == Char ) ) || //2pion
-        ( ( mvinch( 5, 41 ) == Char ) && ( mvinch( 7, 41 ) == Char) && ( mvinch( 9, 41 ) == Char ) ) || //3pion
-        ( ( mvinch( 5, 37 ) == Char ) && ( mvinch( 7, 39 ) == Char) && ( mvinch( 9, 41 ) == Char ) ) || //1ukos
-        ( ( mvinch( 5, 41 ) == Char ) && ( mvinch( 7, 39 ) == Char) && ( mvinch( 9, 37 ) == Char ) ) )  //2ukos
+    centerPrint( 4, "#########" );
+    centerPrint( 5, "#| | | |#" );
+    centerPrint( 6, "#|-+-+-|#" );
+    centerPrint( 7, "#| | | |#" );
+    centerPrint( 8, "#|-+-+-|#" );
+    centerPrint( 9, "#| | | |#" );
+    return 2 +
+    centerPrint( 10,"#########" );
+}
+
+bool checkForWin( char Char, int& turn, const int x )
+{
+    if (( ( mvinch( 5, x )     == Char ) && ( mvinch( 5, x + 2 ) == Char ) && ( mvinch( 5, x + 4 ) == Char ) ) || //1poz
+        ( ( mvinch( 7, x )     == Char ) && ( mvinch( 7, x + 2 ) == Char ) && ( mvinch( 7, x + 4 ) == Char ) ) || //2poz
+        ( ( mvinch( 9, x )     == Char ) && ( mvinch( 9, x + 2 ) == Char ) && ( mvinch( 9, x + 4 ) == Char ) ) || //3poz
+        ( ( mvinch( 5, x )     == Char ) && ( mvinch( 7, x )     == Char ) && ( mvinch( 9, x )     == Char ) ) || //1pion
+        ( ( mvinch( 5, x + 2 ) == Char ) && ( mvinch( 7, x + 2 ) == Char ) && ( mvinch( 9, x + 2 ) == Char ) ) || //2pion
+        ( ( mvinch( 5, x + 4 ) == Char ) && ( mvinch( 7, x + 4 ) == Char ) && ( mvinch( 9, x + 4 ) == Char ) ) || //3pion
+        ( ( mvinch( 5, x )     == Char ) && ( mvinch( 7, x + 2 ) == Char ) && ( mvinch( 9, x + 4 ) == Char ) ) || //1ukos
+        ( ( mvinch( 5, x + 4 ) == Char ) && ( mvinch( 7, x + 2 ) == Char ) && ( mvinch( 9, x )     == Char ) ) )  //2ukos
     {
-        mvprintw( 15, 35, "%c won", Char );
+        std::string str = "";
+        str = str + Char + " won";
+        centerPrint( 15, str );
         drawGrid();
         turn = 1;
 
@@ -37,100 +49,111 @@ int main()
 {
     initscr();
 
-    printw( "\n================================= Tic tac toe =================================\n" );
-    printw(   "--------------------------------------1.0--------------------------------------\n\n" );
+    printw( "\n" );
+    for ( int i = 0; i < COLS; i++ )
+        printw( "=" );
+
+    for ( int i = 0; i < COLS; i++ )
+        printw( "-" );
+
+    printw( "\n" );
+    printw( "\n" );
+
+    centerPrint( 1, " Tic Tac Toe " );
+    centerPrint( 2, " 1.1 " );
+
     noecho();
 
-    drawGrid();
 
-    move( 5, 37 );
-    int x = 5;
-    int y = 37;
     int turn = 1;
+    int y = 5;
+    int x = drawGrid();
+    int x_ = x;
 
-    while( true )
+    move( y, x );
+
+    while ( true )
     {
-        if( turn != 10 )
+        if ( turn % 2 == 0 )
+            centerPrint( 3, "o" );
+        else
+            centerPrint( 3, "x" );
+
+        if ( turn != 10 )
         {
-            checkForWin( 'x', turn );
-            checkForWin( 'o', turn );
+            checkForWin( 'x', turn, x_ );
+            checkForWin( 'o', turn, x_ );
         }
         else
         {
-            mvprintw( 15, 38, "draw" );
+            centerPrint( 15, "draw" );
+            clear();
             drawGrid();
             turn = 1;
         }
 
-        move( x, y );
+        move( y, x );
 
         char Char = getch();
 
-        switch( Char )
+        switch ( Char )
         {
             case 'd':
-                y += 2;
+                x += 2;
                 break;
             case 'a':
-                y -= 2;
+                x -= 2;
                 break;
             case 's':
-                x++;
+                y++;
                 break;
             case 'w':
-                x--;
+                y--;
                 break;
         }
 
-        if( mvinch( x, y ) == '#' )
+        if ( mvinch( y, x ) == '#' )
         {
-            switch( Char )
+            switch ( Char )
             {
                 case 'd':
-                    y -= 2;
+                    x -= 2;
                     break;
                 case 'a':
-                    y += 2;
+                    x += 2;
                     break;
                 case 's':
-                    x--;
+                    y--;
                     break;
                 case 'w':
-                    x++;
+                    y++;
                     break;
             }
         }
         else
         {
-            switch( Char )
+            switch ( Char )
             {
                 case 's':
-                    x++;
+                    y++;
                     break;
                 case 'w':
-                    x--;
+                    y--;
                     break;
             }
         }
 
-        mvprintw( 23, 67, "%d, %d, %d, ", x, y, turn );
+        move( y, x );
 
-        if( turn % 2 == 0 )
-            mvprintw( 23, 77, "o" );
-        else
-            mvprintw( 23, 77, "x" );
-
-        move( x, y );
-
-        if( Char == 'e' && ( mvinch( x, y ) == ' ' ) )
+        if ( Char == 'e' && ( mvinch( y, x ) == ' ' ) )
         {
-            if( turn % 2 == 0 )
+            if ( turn % 2 == 0 )
                 printw( "o" );
             else
                 printw( "x" );
 
-            mvprintw( 15, 35, "          ");
-            move( x, y );
+            centerPrint( 15, "          ");
+            move( y, x );
             turn++;
         }
     } //while
